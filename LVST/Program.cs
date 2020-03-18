@@ -50,26 +50,26 @@ namespace LVST
             WriteLine($"Error while parsing...");
         }
 
-        private static async Task RunOptions(Options options)
+        private static async Task RunOptions(Options cliOptions)
         {
-            Stream stream = await StartTorrenting(options);
+            Stream stream = await StartTorrenting(cliOptions);
 
-            await StartPlaybackAsync(stream, options);
+            await StartPlaybackAsync(stream, cliOptions);
 
             ReadKey();
         }
 
-        private static async Task StartPlaybackAsync(Stream stream, Options options)
+        private static async Task StartPlaybackAsync(Stream stream, Options cliOptions)
         {
             Core.Initialize();
 
-            var libvlcVerbosity = options.Verbose ? "--verbose=2" : "--quiet";
+            var libvlcVerbosity = cliOptions.Verbose ? "--verbose=2" : "--quiet";
             libVLC = new LibVLC(libvlcVerbosity);
 
             using var media = new Media(libVLC, new StreamMediaInput(stream));
             mediaPlayer = new MediaPlayer(media);
 
-            if (options.Chromecast)
+            if (cliOptions.Chromecast)
             {
                 var result = await FindAndUseChromecast();
                 if (!result)
@@ -105,16 +105,16 @@ namespace LVST
             return true;
         }
 
-        private static async Task<Stream> StartTorrenting(Options options)
+        private static async Task<Stream> StartTorrenting(Options cliOptions)
         {
             var engine = new ClientEngine();
 
             WriteLine("Loading torrent file...");
-            var torrent = Torrent.Load(new Uri(options.Torrent),
+            var torrent = Torrent.Load(new Uri(cliOptions.Torrent),
                 Path.Combine(Environment.CurrentDirectory, "video.torrent"));
 
             WriteLine("Creating a new StreamProvider...");
-            var provider = new StreamProvider(engine, options.Path, torrent);
+            var provider = new StreamProvider(engine, cliOptions.Path, torrent);
 
             WriteLine("Starting the StreamProvider...");
             await provider.StartAsync();
