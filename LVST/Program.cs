@@ -34,6 +34,10 @@ namespace LVST
             [Option('p', "path", Required = false, HelpText = "Set the path where to save the media file.")]
             public string Path { get; set; } = Environment.CurrentDirectory;
         }
+
+        static LibVLC libVLC;
+        static MediaPlayer mediaPlayer;
+
         static async Task Main(string[] args)
         {
             var result = await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(RunOptions);
@@ -47,6 +51,61 @@ namespace LVST
         }
 
         private static async Task RunOptions(Options options)
+        {
+            Stream stream = await StartTorrenting(options);
+
+            await StartPlaybackAsync(stream, options);
+
+            ReadKey();
+        }
+
+        private static async Task StartPlaybackAsync(Stream stream, Options options)
+        {
+            Core.Initialize();
+
+            var libvlcVerbosity = options.Verbose ? "--verbose=2" : "--quiet";
+            libVLC = new LibVLC(libvlcVerbosity);
+
+            using var media = new Media(libVLC, new StreamMediaInput(stream));
+            mediaPlayer = new MediaPlayer(media);
+
+            if (options.Chromecast)
+            {
+                var result = await FindAndUseChromecast();
+                if (!result)
+                    return;
+            }
+
+            WriteLine("Starting playback...");
+            mediaPlayer.Play();
+        }
+
+        private static async Task<bool> FindAndUseChromecast()
+        {
+            using var rendererDiscoverer = new RendererDiscoverer(libVLC);
+            rendererDiscoverer.ItemAdded += RendererDiscoverer_ItemAdded;
+            if (rendererDiscoverer.Start())
+            {
+                WriteLine("Searching for chromecasts...");
+            }
+            else
+            {
+                WriteLine("Failed starting the chromecast discovery");
+            }
+
+            await Task.Delay(2000);
+
+            if (!renderers.Any())
+            {
+                WriteLine("No chromecast found... aborting.");
+                return false;
+            }
+
+            mediaPlayer.SetRenderer(renderers.First());
+            return true;
+        }
+
+        private static async Task<Stream> StartTorrenting(Options options)
         {
             var engine = new ClientEngine();
 
@@ -64,43 +123,7 @@ namespace LVST
             var stream = await provider.CreateStreamAsync(provider.Manager.Torrent.Files[0]);
 
             WriteLine("Loading LibVLC core library...");
-
-            Core.Initialize();
-
-            var libvlcVerbosity = options.Verbose ? "--verbose=2" : "--quiet";
-            using var libVLC = new LibVLC(libvlcVerbosity);
-
-            using var media = new Media(libVLC, new StreamMediaInput(stream));
-            using var mp = new MediaPlayer(media);
-
-            if(options.Chromecast)
-            {
-                using var rendererDiscoverer = new RendererDiscoverer(libVLC);
-                rendererDiscoverer.ItemAdded += RendererDiscoverer_ItemAdded;
-                if(rendererDiscoverer.Start())
-                {
-                    WriteLine("Searching for chromecasts...");
-                }
-                else
-                {
-                    WriteLine("Failed starting the chromecast discovery");
-                }
-
-                await Task.Delay(2000);
-
-                if(!renderers.Any())
-                {
-                    WriteLine("No chromecast found... aborting.");
-                    return;
-                }
-
-                mp.SetRenderer(renderers.First());
-            }
-
-            WriteLine("Starting playback...");
-            mp.Play();
-
-            ReadKey();
+            return stream;
         }
 
         static List<RendererItem> renderers = new List<RendererItem>();
