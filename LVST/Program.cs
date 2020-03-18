@@ -37,6 +37,7 @@ namespace LVST
 
         static LibVLC libVLC;
         static MediaPlayer mediaPlayer;
+        static List<RendererItem> renderers = new List<RendererItem>();
 
         static async Task Main(string[] args)
         {
@@ -52,15 +53,17 @@ namespace LVST
 
         private static async Task RunOptions(Options cliOptions)
         {
-            Stream stream = await StartTorrenting(cliOptions);
+            var stream = await StartTorrenting(cliOptions);
 
-            await StartPlaybackAsync(stream, cliOptions);
+            await StartPlayback(stream, cliOptions);
 
             ReadKey();
         }
 
-        private static async Task StartPlaybackAsync(Stream stream, Options cliOptions)
+        private static async Task StartPlayback(Stream stream, Options cliOptions)
         {
+            WriteLine("Loading LibVLC core library...");
+
             Core.Initialize();
 
             var libvlcVerbosity = cliOptions.Verbose ? "--verbose=2" : "--quiet";
@@ -87,13 +90,15 @@ namespace LVST
             if (rendererDiscoverer.Start())
             {
                 WriteLine("Searching for chromecasts...");
+                // give it some time...
+                await Task.Delay(2000);
             }
             else
             {
                 WriteLine("Failed starting the chromecast discovery");
             }
 
-            await Task.Delay(2000);
+            rendererDiscoverer.ItemAdded -= RendererDiscoverer_ItemAdded;
 
             if (!renderers.Any())
             {
@@ -119,14 +124,11 @@ namespace LVST
             WriteLine("Starting the StreamProvider...");
             await provider.StartAsync();
 
-            WriteLine("Create a stream from the torrent file...");
+            WriteLine("Creating a stream from the torrent file...");
             var stream = await provider.CreateStreamAsync(provider.Manager.Torrent.Files[0]);
 
-            WriteLine("Loading LibVLC core library...");
             return stream;
         }
-
-        static List<RendererItem> renderers = new List<RendererItem>();
 
         private static void RendererDiscoverer_ItemAdded(object sender, RendererDiscovererItemAddedEventArgs e)
         {
