@@ -62,7 +62,7 @@ namespace LVST
 
         private static async Task StartPlayback(Stream stream, Options cliOptions)
         {
-            WriteLine("Loading LibVLC core library...");
+            WriteLine("LibVLCSharp -> Loading LibVLC core library...");
 
             Core.Initialize();
 
@@ -79,7 +79,7 @@ namespace LVST
                     return;
             }
 
-            WriteLine("Starting playback...");
+            WriteLine("LibVLCSharp -> Starting playback...");
             mediaPlayer.Play();
         }
 
@@ -89,20 +89,20 @@ namespace LVST
             rendererDiscoverer.ItemAdded += RendererDiscoverer_ItemAdded;
             if (rendererDiscoverer.Start())
             {
-                WriteLine("Searching for chromecasts...");
+                WriteLine("LibVLCSharp -> Searching for chromecasts...");
                 // give it some time...
                 await Task.Delay(2000);
             }
             else
             {
-                WriteLine("Failed starting the chromecast discovery");
+                WriteLine("LibVLCSharp -> Failed starting the chromecast discovery");
             }
 
             rendererDiscoverer.ItemAdded -= RendererDiscoverer_ItemAdded;
 
             if (!renderers.Any())
             {
-                WriteLine("No chromecast found... aborting.");
+                WriteLine("LibVLCSharp -> No chromecast found... aborting.");
                 return false;
             }
 
@@ -114,17 +114,24 @@ namespace LVST
         {
             var engine = new ClientEngine();
 
-            WriteLine("Loading torrent file...");
+            WriteLine("MonoTorrent -> Loading torrent file...");
             var torrent = Torrent.Load(new Uri(cliOptions.Torrent),
                 Path.Combine(Environment.CurrentDirectory, "video.torrent"));
 
-            WriteLine("Creating a new StreamProvider...");
+            WriteLine("MonoTorrent -> Creating a new StreamProvider...");
             var provider = new StreamProvider(engine, cliOptions.Path, torrent);
 
-            WriteLine("Starting the StreamProvider...");
+            if (cliOptions.Verbose)
+            {
+
+                provider.Manager.PeerConnected += (o, e) => WriteLine($"MonoTorrent -> Connection succeeded: {e.Peer.Uri}");
+                provider.Manager.ConnectionAttemptFailed += (o, e) => WriteLine($"MonoTorrent -> Connection failed: {e.Peer.ConnectionUri} - {e.Reason} - {e.Peer.AllowedEncryption}");
+            }
+
+            WriteLine("MonoTorrent -> Starting the StreamProvider...");
             await provider.StartAsync();
 
-            WriteLine("Creating a stream from the torrent file...");
+            WriteLine("MonoTorrent -> Creating a stream from the torrent file...");
             var stream = await provider.CreateStreamAsync(provider.Manager.Torrent.Files[0]);
 
             return stream;
@@ -132,7 +139,7 @@ namespace LVST
 
         private static void RendererDiscoverer_ItemAdded(object sender, RendererDiscovererItemAddedEventArgs e)
         {
-            WriteLine($"Found a new renderer {e.RendererItem.Name} of type {e.RendererItem.Type}!");
+            WriteLine($"LibVLCSharp -> Found a new renderer {e.RendererItem.Name} of type {e.RendererItem.Type}!");
             renderers.Add(e.RendererItem);
         }
     }
