@@ -1,0 +1,25 @@
+# LVST
+
+.NET Core CLI app using MonoTorrent and LibVLCSharp.
+
+lvst allows you to stream any media torrent for local or remote (chromecast) playback on Windows, macOS and Linux.
+
+```
+ .\LVST.exe --help
+LVST 1.0.0
+Copyright (C) 2020 LVST
+
+  -v, --verbose    Set output to verbose messages.
+
+  -t, --torrent    The torrent link to download and play
+
+  -c, --cast       Cast to the chromecast
+
+  -s, --save       Whether to save the media file. Defaults to true.
+
+  -p, --path       Set the path where to save the media file.
+
+  --help           Display this help screen.
+
+  --version        Display version information.
+```
