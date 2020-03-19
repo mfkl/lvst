@@ -22,7 +22,7 @@ namespace LVST
 
             // TODO: set Required = true
             [Option('t', "torrent", Required = false, HelpText = "The torrent link to download and play")]
-            public string Torrent { get; set; } = "https://zoink.ch/torrent/Better.Call.Saul.S05E05.480p.x264-mSD[eztv].mkv.torrent";
+            public string Torrent { get; set; } = "http://www.publicdomaintorrents.com/bt/btdownload.php?type=torrent&file=Charlie_Chaplin_Mabels_Strange_Predicament.avi.torrent";
 
             // TODO: If multiple chromecast on the network, allow selecting it interactively via the CLI
             [Option('c', "cast", Required = false, HelpText = "Cast to the chromecast")]
