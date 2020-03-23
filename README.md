@@ -23,3 +23,5 @@ Copyright (C) 2020 LVST
 
   --version        Display version information.
 ```
+
+### [See the related blogpost](https://mfkl.github.io/libvlc/2020/03/23/Torrents-and-multimedia-streaming.html)
