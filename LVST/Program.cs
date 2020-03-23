@@ -20,7 +20,6 @@ namespace LVST
             [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
             public bool Verbose { get; set; } = true;
 
-            // TODO: set Required = true
             [Option('t', "torrent", Required = false, HelpText = "The torrent link to download and play")]
             public string Torrent { get; set; } = "http://www.publicdomaintorrents.com/bt/btdownload.php?type=torrent&file=Charlie_Chaplin_Mabels_Strange_Predicament.avi.torrent";
 
@@ -66,8 +65,9 @@ namespace LVST
 
             Core.Initialize();
 
-            var libvlcVerbosity = cliOptions.Verbose ? "--verbose=2" : "--quiet";
-            libVLC = new LibVLC(libvlcVerbosity);
+            libVLC = new LibVLC();
+            if(cliOptions.Verbose)
+                libVLC.Log += (s, e) => WriteLine($"LibVLC -> {e.Module}: {e.Message}");
 
             using var media = new Media(libVLC, new StreamMediaInput(stream));
             mediaPlayer = new MediaPlayer(media);
