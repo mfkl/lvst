@@ -4,6 +4,8 @@
 
 lvst allows you to stream any media torrent for local or remote (chromecast) playback on Windows, macOS and Linux.
 
+<img src="https://raw.githubusercontent.com/mfkl/lvst/master/lvst.gif"/>
+
 ```
  .\LVST.exe --help
 LVST 1.0.0
