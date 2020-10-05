@@ -67,7 +67,7 @@ namespace LVST
 
             libVLC = new LibVLC();
             if(cliOptions.Verbose)
-                libVLC.Log += (s, e) => WriteLine($"LibVLC -> {e.Module}: {e.Message}");
+                libVLC.Log += (s, e) => WriteLine($"LibVLC -> {e.FormattedLog}");
 
             using var media = new Media(libVLC, new StreamMediaInput(stream));
             mediaPlayer = new MediaPlayer(media);
@@ -123,7 +123,6 @@ namespace LVST
 
             if (cliOptions.Verbose)
             {
-
                 provider.Manager.PeerConnected += (o, e) => WriteLine($"MonoTorrent -> Connection succeeded: {e.Peer.Uri}");
                 provider.Manager.ConnectionAttemptFailed += (o, e) => WriteLine($"MonoTorrent -> Connection failed: {e.Peer.ConnectionUri} - {e.Reason} - {e.Peer.AllowedEncryption}");
             }
