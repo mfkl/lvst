@@ -113,6 +113,8 @@ namespace LVST
         private static async Task<Stream> StartTorrenting(Options cliOptions)
         {
             var engine = new ClientEngine();
+            await engine.RegisterDhtAsync (new MonoTorrent.Dht.DhtEngine (MonoTorrent.Dht.Listeners.DhtListenerFactory.CreateUdp (5555)));
+            await engine.DhtEngine.StartAsync ();
 
             WriteLine("MonoTorrent -> Loading torrent file...");
             var torrent = Torrent.Load(new Uri(cliOptions.Torrent),
