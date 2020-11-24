@@ -133,7 +133,7 @@ namespace LVST
             await provider.StartAsync();
 
             WriteLine("MonoTorrent -> Creating a stream from the torrent file...");
-            var stream = await provider.CreateStreamAsync(provider.Manager.Torrent.Files[0]);
+            var stream = await provider.CreateStreamAsync(provider.Files [0]);
 
             return stream;
         }
