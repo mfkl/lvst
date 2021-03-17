@@ -36,7 +36,7 @@ namespace LVST
 
         static LibVLC libVLC;
         static MediaPlayer mediaPlayer;
-        static List<RendererItem> renderers = new List<RendererItem>();
+        static readonly List<RendererItem> renderers = new List<RendererItem>();
 
         static async Task Main(string[] args)
         {
@@ -113,27 +113,34 @@ namespace LVST
         private static async Task<Stream> StartTorrenting(Options cliOptions)
         {
             var engine = new ClientEngine();
-            await engine.RegisterDhtAsync (new MonoTorrent.Dht.DhtEngine (MonoTorrent.Dht.Listeners.DhtListenerFactory.CreateUdp (5555)));
-            await engine.DhtEngine.StartAsync ();
 
             WriteLine("MonoTorrent -> Loading torrent file...");
-            var torrent = Torrent.Load(new Uri(cliOptions.Torrent),
+            var torrent = await Torrent.LoadAsync(new Uri(cliOptions.Torrent),
                 Path.Combine(Environment.CurrentDirectory, "video.torrent"));
 
             WriteLine("MonoTorrent -> Creating a new StreamProvider...");
-            var provider = new StreamProvider(engine, cliOptions.Path, torrent);
+            var manager = await engine.AddStreamingAsync (torrent, cliOptions.Path);
 
             if (cliOptions.Verbose)
             {
-                provider.Manager.PeerConnected += (o, e) => WriteLine($"MonoTorrent -> Connection succeeded: {e.Peer.Uri}");
-                provider.Manager.ConnectionAttemptFailed += (o, e) => WriteLine($"MonoTorrent -> Connection failed: {e.Peer.ConnectionUri} - {e.Reason} - {e.Peer.AllowedEncryption}");
+                manager.PeerConnected += (o, e) => WriteLine($"MonoTorrent -> Connection succeeded: {e.Peer.Uri}");
+                manager.ConnectionAttemptFailed += (o, e) => WriteLine($"MonoTorrent -> Connection failed: {e.Peer.ConnectionUri} - {e.Reason} - {e.Peer}");
             }
 
             WriteLine("MonoTorrent -> Starting the StreamProvider...");
-            await provider.StartAsync();
+            await manager.StartAsync();
 
-            WriteLine("MonoTorrent -> Creating a stream from the torrent file...");
-            var stream = await provider.CreateStreamAsync(provider.Files [0]);
+            // As the TorrentManager was created using an actual torrent, the metadata will already exist.
+            // This is future proofing in case a MagnetLink is used instead
+            if (!manager.HasMetadata)
+            {
+                WriteLine("MonoTorrent -> Waiting for the metadata to be downloaded from a peer...");
+                await manager.WaitForMetadataAsync();
+            }
+
+            var largestFile = manager.Files.OrderByDescending(t => t.Length).First();
+            WriteLine($"MonoTorrent -> Creating a stream for the torrent file... {largestFile.Path}");
+            var stream = await manager.StreamProvider.CreateStreamAsync(largestFile);
 
             return stream;
         }
