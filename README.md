@@ -1,5 +1,7 @@
 # LVST
 
+[![Join the chat at https://discord.gg/3h3K3JF](https://img.shields.io/discord/716939396464508958?label=discord)](https://discord.gg/3h3K3JF)
+
 .NET Core CLI app using MonoTorrent and LibVLCSharp.
 
 lvst allows you to stream any media torrent for local or remote (chromecast) playback on Windows, macOS and Linux.
